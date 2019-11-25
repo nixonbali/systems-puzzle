@@ -92,4 +92,8 @@ nginx_1     | 172.19.0.1 - - [25/Nov/2019:06:24:26 +0000] "POST / HTTP/1.1" 302 
       - issue not (at least not only) with creating new Item, must be with `db_session.add(item)` or `db_session.commit()`
       - after much finagling with ports, turned back to the '/success' page to confirm Items were being saved. Was able to confirm using some print statements in the `add_item()`, and altered the `success()` function to display these correctly.
 
-  So, at this point, we have the "/" page displaying content, the form accepting content and saving it in our db, and this is persisting through the volumes, as the same data appears after stopping and restarting the app, and a '/success' page that displays the items. What isn't working is the transition from the '/' page to the '/success' page.
+  So, at this point, we have the "/" page displaying content, the form accepting content and saving it in our db, and this is persisting through the volumes, as the same data appears after stopping and restarting the app, and a '/success' page that displays the items. What isn't working is the transition from the '/' page to the '/success' page. Instead, the address routed to is "http://localhost%2Clocalhost:8080/success".
+
+### Final thoughts.
+
+I tried to dig in to how flask redirect and url_for work, but that only seemed to make me less sure this was an `app.py` or templates issue. I'm sure I'm missing something here. It could be a miscommunication between nginx and flask that's causing the issue. 

@@ -18,7 +18,6 @@ def add_item():
         item = Items(name=form.name.data, quantity=form.quantity.data, description=form.description.data, date_added=datetime.datetime.now())
         db_session.add(item)
         db_session.commit()
-        print(str(db_session.query(Items).all()))
         return redirect(url_for('success'))
     return render_template('index.html', form=form)
 
@@ -33,4 +32,4 @@ def success():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5001)
+    app.run(host='0.0.0.0', port=5001)
