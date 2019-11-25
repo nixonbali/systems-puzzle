@@ -5,9 +5,19 @@
 Having explored the different technologies, syntax, and common practices, as well as studying the code, I've noted a number of likely bugs where I think either the syntax is off, something is missing, or something is mis-labeled. To control for each potential bug, I'll be testing one fix at a time.
 
 ### Likely bugs
- -
+A list of odd syntax, things that look mislabeled, and things I think might be missing
+  - `Dockerfile` needs to declare flask_app environment variable: `ENV FLASK_APP app.py` before running `app.py`
+  - `docker_compose.yml`
+    - nginx ports
+    - nginx environment variables missing
+    - volumes for database and nginx
+  - `database.py` - `create_engine(postgres...)` should be `create_engine(postgresql...)`
+  - `models.py` - `Items` class needs `__init__`
+  - `flaskapp.conf` listen port
 
-However, to begin, I'll run the specified commands, and then try to identify and solve the bugs in an order that makes sense. The first task will be ensuring the containers are communicating properly, as this will make identifying their indvidual bugs clearer (if this doesn't work, my next move would be to try testing each in isolation).
+### Moving through app
+
+However, to begin, I'll run the specified commands, and then try to identify and solve the bugs in an order that makes sense. The first task will be ensuring the containers are communicating properly, as this will make identifying their individual bugs clearer (if this doesn't work, my next move would be to try testing each in isolation).
 
 - Initial compose:
   - http://localhost:8080 - (where the app is supposed to be hosted)'This site can't be reached'
@@ -61,3 +71,25 @@ However, to begin, I'll run the specified commands, and then try to identify and
       - site no longer displaying content
       - `docker-compose ps` - `80/tcp, 0.0.0.0:5000->8080/tcp` for nginx
     - committing only `flaskapp.conf`: `proxy_pass http://flaskapp:5000` and moving on for now
+  - connecting database and flask
+    - logs: `db_1        | LOG:  database system is ready to accept connections`
+    - default port for postgresql 5432
+    - from notes on likely bugs from my first pass:
+      - `database.py` - `create_engine('postgres://%s:%s@%s:%s/%s' % (user, pwd, host, port, db))`
+      - values look correct
+      - syntax: `postgresql` insteadof `postgres`
+        - no change in logs, content display, or ports
+        - going to sideline issue for now, no changes saved
+  - the post request not going through : logs showing
+    `flaskapp_1  | 172.19.0.3 - - [25/Nov/2019 06:24:26] "POST / HTTP/1.0" 302 -
+nginx_1     | 172.19.0.1 - - [25/Nov/2019:06:24:26 +0000] "POST / HTTP/1.1" 302 223 "http://localhost:8080/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36" "-"`
+    - likely an issue with routing, or rendering templates
+    - from `app.py`, when creating a new Item, runs into one of my likely bugs, the `Items` class not having an `__init__` function. Going to see if this changes anything
+      - no changes, commenting out these additions for now
+    -  notes:
+      - logs not showing get request to '/success' after submission of form, likely an error before the redirect
+      - connecting to `localhost:8080/success` directly in browser displays content
+      - issue not (at least not only) with creating new Item, must be with `db_session.add(item)` or `db_session.commit()`
+      - after much finagling with ports, turned back to the '/success' page to confirm Items were being saved. Was able to confirm using some print statements in the `add_item()`, and altered the `success()` function to display these correctly.
+
+  So, at this point, we have the "/" page displaying content, the form accepting content and saving it in our db, and this is persisting through the volumes, as the same data appears after stopping and restarting the app, and a '/success' page that displays the items. What isn't working is the transition from the '/' page to the '/success' page.
