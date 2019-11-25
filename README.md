@@ -2,7 +2,12 @@
 
 ## Approach
 
-Having explored the different technologies, syntax, and common practices, as well as studying the code, I've noted a number of likely bugs where I think either the syntax is off, something is missing, or something is mis-labeled. To control for each potential bug, I'll be testing one fix at a time. However, to begin, I'll run the specified commands, and then try to identify and solve the bugs in an order that makes sense. The first task will be ensuring the containers are communicating properly, as this will make identifying their indvidual bugs clearer (if this doesn't work, my next move would be to try testing each in isolation).
+Having explored the different technologies, syntax, and common practices, as well as studying the code, I've noted a number of likely bugs where I think either the syntax is off, something is missing, or something is mis-labeled. To control for each potential bug, I'll be testing one fix at a time.
+
+### Likely bugs
+ -
+
+However, to begin, I'll run the specified commands, and then try to identify and solve the bugs in an order that makes sense. The first task will be ensuring the containers are communicating properly, as this will make identifying their indvidual bugs clearer (if this doesn't work, my next move would be to try testing each in isolation).
 
 - Initial compose:
   - http://localhost:8080 - (where the app is supposed to be hosted)'This site can't be reached'
@@ -38,3 +43,21 @@ Having explored the different technologies, syntax, and common practices, as wel
     - `flaskapp.conf`: `proxy_pass http://flaskapp:5001` - should this be `5000`?
     - `Dockerfile`: `EXPOSE 5001` - should this be `5000`?
     - `docker-compose.yml`, still the nginx ports, `8080:8080` -> `8080:5001`, `8080:5000`?
+    - Also of note: in the Dockerfile (which is tied to the flask container), the `FLASK_APP` environment variable is not set before running the app. Going to try adding this line first:
+      `ENV FLASK_APP app.y` before exposing the port
+      - no change. I'm going to remove this for now, even though I think I may need this.
+    - I don't see the benefit of using port 5001 over default port 5000 for flask.
+    - `flaskapp.conf`: `proxy_pass http://flaskapp:5000`
+      - http:localhost/8080 displays content!
+      - submitting the form leads to 'site can't be reached' - will come back to this
+      - no changes to `docker-compose ps` ports.
+      - Does this mean there is a connection between nginx and flask?
+    - `Dockerfile`: `EXPOSE 5001`
+      - changes nothing by itself, or combined with above change.
+    - `docker-compose.yml` ports `8080:5001`
+      - site no longer displaying content
+      - `docker-compose ps` - `80/tcp, 0.0.0.0:5001->8080/tcp` for nginx
+    - `docker-compose.yml` ports `8080:5000`
+      - site no longer displaying content
+      - `docker-compose ps` - `80/tcp, 0.0.0.0:5000->8080/tcp` for nginx
+    - committing only `flaskapp.conf`: `proxy_pass http://flaskapp:5000` and moving on for now
