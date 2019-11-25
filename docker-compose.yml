@@ -22,12 +22,12 @@ services:
   nginx:
     image: "nginx:1.13.5"
     ports:
-      - "80:8080"
+      - "8080:8080"
     volumes:
       - ./conf.d:/etc/nginx/conf.d
     networks:
       - web_network
-    depends_on: 
+    depends_on:
       - flaskapp
 networks:
   db_network:
